@@ -61,6 +61,7 @@ class ParagraphBox<PS, SEG, S> extends Region {
     }
 
     private final ParagraphText<PS, SEG, S> text;
+    private final BiConsumer<TextFlow, PS> paragraphStyler;
 
     private final ObjectProperty<IntFunction<? extends Node>> graphicFactory
             = new SimpleObjectProperty<>(null);
@@ -94,6 +95,7 @@ class ParagraphBox<PS, SEG, S> extends Region {
         this.getStyleClass().add("paragraph-box");
         this.text = new ParagraphText<>(par, nodeFactory);
         applyParagraphStyle.accept(this.text, par.getParagraphStyle());
+        paragraphStyler = applyParagraphStyle;
         
         // start at -1 so that the first time it is displayed, the caret at pos 0 is not
         // accidentally removed from its parent and moved to this node's ParagraphText
@@ -117,7 +119,18 @@ class ParagraphBox<PS, SEG, S> extends Region {
         graphicOffset.addListener(obs -> requestLayout());
     }
 
+    void updateItem(Paragraph<PS, SEG, S> par) {
+        this.text.getStyleClass().setAll("paragraph-text");
+        paragraphStyler.accept(this.text, par.getParagraphStyle());
+        text.setParagraph(par);
+    }
+
     void dispose() {
+        highlightTextFillProperty().unbind();
+        graphicFactoryProperty().unbind();
+        wrapTextProperty().unbind();
+        graphicOffset.unbind();
+        getChildren().clear();
         text.dispose();
     }
 
